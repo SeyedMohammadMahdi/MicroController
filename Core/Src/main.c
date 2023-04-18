@@ -347,6 +347,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	static index = 0;
+	static char str3[1000];
+	static char str4[1000];
 	if (huart->Instance == USART1) {
 		if (entered == 0) {
 			entered = 1;
@@ -370,10 +372,12 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 		}
 
 		if (sentenceTurn == 2) {
-			if (!strcmp(str1, str2)){
+//			if (!strcmp(str1, str2)){
 //				HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
-				percent = compare(str1, str2);
-			}
+			strcpy(str3, str1);
+			strcpy(str4, str2);
+				percent = compare(str3, str4);
+//			}
 		}
 		HAL_UART_Receive_IT(&huart1, &input, sizeof(input));
 	}
@@ -477,8 +481,6 @@ int compare(char *str1, char *str2) {
         for (j = 0; j < count2; j++) {
             if (strcmp(words1[i], words2[j]) == 0) {
                 similar_words += 1.0 - abs(index_2 - index_1) / ((str1_length + str2_length) / 2.0);
-                printf("for word : %s index1 is : %ld\n", words1[i], index_1);
-                printf("index2 is : %ld\n", index_2);
                 break;
             }
             index_2 += strlen(words2[j]);
@@ -498,7 +500,6 @@ int compare(char *str1, char *str2) {
         return 0;
     } else {
         float similarity = (similar_words * 100.0) / ((count1 + count2) / 2.0);
-        similarity += 0.51;
         return (int)similarity;
     }
 }
