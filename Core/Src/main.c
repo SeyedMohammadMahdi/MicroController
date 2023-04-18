@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "string.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -61,6 +61,7 @@ static void MX_TIM2_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 void decode(int num, int BCD[4]);
+int compare(char *str1, char *str2);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -292,6 +293,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		} else if (state == 1) {
 			state++;
 			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0 | GPIO_PIN_2, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
 			decode((percent / 10) % 10, bcd);
 			for (int i = 0; i < 4; i++) {
 				HAL_GPIO_WritePin(GPIOB, IC[i], bcd[i]);
@@ -306,43 +308,38 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 			}
 		}
 
-		if (wordEnterd){
-			if (oneSec % exLedFreq == 0){
+		if (wordEnterd) {
+			if (oneSec % exLedFreq == 0) {
 				HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
 			}
-		}
-		else if(fiveSec){
-			if(fiveSecond % exLedFreq == 0){
+		} else if (fiveSec) {
+			if (fiveSecond % exLedFreq == 0) {
 				HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
 			}
-		}
-		else if(entered) {
+		} else if (entered) {
 			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
 		}
 
-		if (percent >= 60){
+		if (percent >= 60) {
 			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
-		}
-		else if (entered && percent < 60){
+		} else if (entered && percent < 60) {
 			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
 		}
-		if(fiveSec){
+		if (fiveSec) {
 			fiveSecond--;
-			if (fiveSecond == 0){
+			if (fiveSecond == 0) {
 				fiveSecond = 5000;
 				fiveSec = 0;
 			}
 
-		}
-		else if (wordEnterd){
+		} else if (wordEnterd) {
 			oneSec--;
-			if(oneSec == 0){
+			if (oneSec == 0) {
 				wordEnterd = 0;
 				oneSec = 1000;
 			}
 		}
 		counter++;
-
 
 	}
 }
@@ -353,7 +350,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 		if (entered == 0) {
 			entered = 1;
 		}
-		if ((int)input == 32){
+		if ((int) input == 32) {
 			wordEnterd = 1;
 			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
 		}
@@ -371,10 +368,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 			str2[index + 1] = '\0';
 		}
 
-		if (sentenceTurn == 2){
-			if (!strcmp(str1), str2){
+		if (sentenceTurn == 2) {
+			if (!strcmp(str1, str2)){
 //				HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
-				percent = 70;
+				percent = compare(str1, str2);
 			}
 		}
 		HAL_UART_Receive_IT(&huart1, &input, sizeof(input));
@@ -447,6 +444,52 @@ void decode(int num, int BCD[4]) {
 		break;
 	}
 }
+
+
+int compare(char *str1, char *str2) {
+    char *words1[200];
+    char *words2[200];
+    char *word;
+    int i, j, count1 = 0, count2 = 0, similar_words = 0, similar1 = 0;
+
+    // Split string1 into words
+    word = strtok(str1, " ");
+    while (word != NULL && count1 < 200) {
+        words1[count1++] = word;
+        word = strtok(NULL, " ");
+    }
+
+    // Split string2 into words
+    word = strtok(str2, " ");
+    while (word != NULL && count2 < 200) {
+        words2[count2++] = word;
+        word = strtok(NULL, " ");
+    }
+
+    // Compare the words in both strings
+    for (i = 0; i < count1; i++) {
+        for (j = 0; j < count2; j++) {
+            if (strcmp(words1[i], words2[j]) == 0) {
+                similar_words++;
+                break;
+            }
+        }
+    }
+    for (i = 0; i < count1; i++){
+    	if(strstr(str2, words1[i]) != NULL){
+    		similar1++;
+    	}
+    }
+
+    // Calculate similarity percentage
+    if (count1 == 0 || count2 == 0) {
+        return 0;
+    } else {
+        int similarity = (similar1 * 100) / ((count1 + count2) / 2);
+        return similarity;
+    }
+}
+
 /* USER CODE END 4 */
 
 /**
