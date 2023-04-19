@@ -49,8 +49,8 @@ char input = '0';
 int percent = 0;
 int entered = 0;
 int sentenceTurn = 0;
-char str1[1000];
-char str2[1000];
+char str1[1000] = "hello world";
+char str2[1000] = "world hello";
 int fiveSec = 0;
 int wordEnterd = 0;
 /* USER CODE END PV */
@@ -341,6 +341,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 			}
 		}
 		counter++;
+		percent = compare(str1, str2);
 
 	}
 }
@@ -380,6 +381,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 //			}
 		}
 		HAL_UART_Receive_IT(&huart1, &input, sizeof(input));
+		HAL_UART_Transmit_DMA(huart1, &input, sizeof(char));
 	}
 }
 
@@ -460,17 +462,19 @@ int compare(char *str1, char *str2) {
     int i, j, count1 = 0, count2 = 0, similar1 = 0;
     float similar_words = 0;
     // Split string1 into words
-    word = strtok(str1, " \n");
+    word = strtok(str1, " ");
+    count1++;
     while (word != NULL && count1 < 200) {
         words1[count1++] = word;
-        word = strtok(NULL, " \n");
+        word = strtok(NULL, " ");
     }
 
     // Split string2 into words
-    word = strtok(str2, " \n");
+    word = strtok(str2, " ");
+    count2++;
     while (word != NULL && count2 < 200) {
         words2[count2++] = word;
-        word = strtok(NULL, " \n");
+        word = strtok(NULL, " ");
     }
     
     long int index_1 = 0;
